@@ -1,0 +1,129 @@
+Attendly - Deployment Guide
+Follow these steps to deploy your self-hosted Attendly Time Clock system. The process takes approximately 15-20 minutes.
+
+Phase 1: Configure Your Google Sheet (10 Mins)
+This sheet will act as your database.
+
+1.1 Create a New Google Sheet
+
+Go to sheets.google.com.
+
+Create a new blank spreadsheet.
+
+Rename it to something memorable, like "Attendly Time Clock Data".
+
+1.2 Set Up the "Employee Database" Tab
+
+Rename the default "Sheet1" tab to Employee Database.
+
+In cell A1, type Employee Name.
+
+In cell B1, type DOB (YYYY-MM-DD).
+
+Add your employee details starting from row 2.
+
+1.3 Set Up the "Attendance Log" Tab
+
+Click the + icon to add a new sheet.
+
+Rename this new sheet to Attendance Log.
+
+Set up the following headers in row 1:
+
+A1: Employee Name
+
+B1: Date
+
+C1: Punch In Time
+
+D1: Punch Out Time
+
+E1: Total Hours
+
+F1: Status
+
+1.4 Get Your Spreadsheet ID
+
+Look at the URL in your browser's address bar.
+
+The ID is the long string of characters between /d/ and /edit.
+
+.../spreadsheets/d/1aBcDeFgHiJkLmNoPqRsTuVwXyZ/edit...
+
+Copy this ID and save it somewhere safe. You'll need it in the next phase.
+
+Phase 2: Deploy the Google Apps Script (10 Mins)
+This script is the backend that powers your time clock.
+
+2.1 Create a New Script Project
+
+Go to script.google.com.
+
+Click New project.
+
+Give the project a name, like "Attendly Backend API".
+
+2.2 Add the Backend Code
+
+Delete any existing code in the Code.gs file.
+
+Open the google-apps-script.js file provided.
+
+Copy its entire content and paste it into the script editor.
+
+Crucially: Find the line const SPREADSHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE'; and replace YOUR_GOOGLE_SHEET_ID_HERE with the ID you copied in step 1.4.
+
+2.3 Run the Initializer (Optional but Recommended)
+
+In the script editor, find the function dropdown menu at the top.
+
+Select the initializeSheet function.
+
+Click Run.
+
+A popup will ask for authorization. Follow the steps to grant the script permission to access your Google Sheets.
+
+You may need to click "Advanced" and "Go to (unsafe)" to proceed. This is normal because the app was created by you.
+
+2.4 Deploy as a Web App
+
+Click the blue Deploy button and select New deployment.
+
+Click the gear icon next to "Select type" and choose Web app.
+
+Configure the deployment:
+
+Description: Attendly Time Clock API v1.0
+
+Execute as: Me (your@email.com)
+
+Who has access: Anyone (This is required for the public-facing webpage to communicate with it).
+
+Click Deploy.
+
+Important: Copy the generated Web app URL. This is the link between your frontend and backend.
+
+Phase 3: Configure and Launch the Frontend (5 Mins)
+3.1 Update the Frontend File
+
+Open the index.html file in a text editor.
+
+Find the line: const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+
+Replace YOUR_GOOGLE_APPS_SCRIPT_URL_HERE with the Web app URL you copied in step 2.4.
+
+Save the file.
+
+3.2 Test Locally
+
+Drag the modified index.html file into your web browser.
+
+The employee dropdown should load.
+
+Perform a test punch-in and punch-out. Check your Google Sheet to see if the data appears in the "Attendance Log".
+
+3.3 Deploy the Live Website
+
+You can now host the index.html file anywhere. For a free and easy solution, use Netlify Drop or GitHub Pages. Simply upload the final index.html file to get a live, shareable URL for your employees.
+
+Congratulations! Your Attendly Time Clock system is now fully operational.

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendly - Time Clock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glow-color: #00d4ff;
+            --glow-color-alt: #007bff;
+            --success-color: #2dd4bf; /* Teal 400 */
+            --error-color: #f43f5e;   /* Rose 500 */
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #050818;
+            color: #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            overflow: hidden;
+        }
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+        .soft-glow-text {
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+        .container {
+            background: rgba(14, 21, 57, 0.5);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 123, 255, 0.1);
+            animation: fadeInUp 0.6s ease-out;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Form Styles */
+        .form-label {
+            font-weight: 600;
+            color: #cbd5e1; /* Slate 300 */
+        }
+        .form-input, .form-select {
+            background-color: rgba(5, 8, 24, 0.7);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: #e2e8f0;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--glow-color);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+        .form-select option {
+            background-color: #050818;
+        }
+        /* Button Styles */
+        .punch-btn {
+            position: relative;
+            overflow: hidden;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .punch-in {
+            background: linear-gradient(135deg, var(--success-color), #0d9488);
+            box-shadow: 0 0 15px var(--success-color);
+        }
+        .punch-in:hover {
+            box-shadow: 0 0 25px var(--success-color), 0 0 40px var(--success-color);
+            transform: translateY(-2px);
+        }
+        .punch-out {
+            background: linear-gradient(135deg, var(--error-color), #be123c);
+            box-shadow: 0 0 15px var(--error-color);
+        }
+        .punch-out:hover {
+            box-shadow: 0 0 25px var(--error-color), 0 0 40px var(--error-color);
+            transform: translateY(-2px);
+        }
+        /* Status Message Styles */
+        .status-message {
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(10px);
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-width: 1px;
+            border-style: solid;
+        }
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .status-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        .status-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+            border-color: var(--error-color);
+        }
+        .status-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--glow-color);
+            border-color: var(--glow-color);
+        }
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid var(--glow-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="container p-8 rounded-2xl">
+        <h1 class="text-4xl font-bold text-white soft-glow-text">Attendly</h1>
+        <p class="text-slate-400 mt-2 mb-6">Smart Time Clock System</p>
+        
+        <div class="current-time bg-black/20 text-slate-300 p-3 rounded-lg mb-6 text-sm" id="currentTime">
+            Loading current time...
+        </div>
+
+        <form id="attendanceForm" class="space-y-6">
+            <div class="form-group text-left">
+                <label for="employeeName" class="form-label block mb-2">Employee Name</label>
+                <select id="employeeName" class="form-select w-full p-3 rounded-lg" required>
+                    <option value="">Select an employee...</option>
+                </select>
+            </div>
+
+            <div class="form-group text-left">
+                <label for="dateOfBirth" class="form-label block mb-2">Date of Birth (YYYY-MM-DD)</label>
+                <input type="date" id="dateOfBirth" class="form-input w-full p-3 rounded-lg" required>
+            </div>
+
+            <div class="buttons-container grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                <button type="button" class="punch-btn punch-in text-white font-bold py-3 rounded-lg" id="punchInBtn">
+                    PUNCH IN
+                </button>
+                <button type="button" class="punch-btn punch-out text-white font-bold py-3 rounded-lg" id="punchOutBtn">
+                    PUNCH OUT
+                </button>
+            </div>
+        </form>
+
+        <div id="statusMessage" class="status-message mt-6 p-3 rounded-lg font-semibold">
+            Ready to clock in.
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        // IMPORTANT: Replace this placeholder with the URL of your deployed Google Apps Script.
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuccpxg_Itwn-_xfxipf_QP37Fre8P3rzAEXKm6549l6fwfGnU6r1bYwHbWedxQFiC/exec'
+        
+        // --- Global Variables ---
+        let employees = [];
+        
+        // --- DOM Elements ---
+        const employeeSelect = document.getElementById('employeeName');
+        const dobInput = document.getElementById('dateOfBirth');
+        const punchInBtn = document.getElementById('punchInBtn');
+        const punchOutBtn = document.getElementById('punchOutBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const currentTimeDiv = document.getElementById('currentTime');
+        
+        // --- Page Initialization ---
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            loadEmployees();
+            
+            punchInBtn.addEventListener('click', () => handlePunch('in'));
+            punchOutBtn.addEventListener('click', () => handlePunch('out'));
+        });
+        
+        // --- Core Functions ---
+
+        // Updates the current time display
+        function updateCurrentTime() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+            };
+            currentTimeDiv.textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        // Fetches the employee list from Google Sheets
+        async function loadEmployees() {
+            if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                showStatus('Configuration needed. Please set the Google Apps Script URL.', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Loading employees...', 'info', true);
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getEmployees`);
+                if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    employees = data.employees;
+                    populateEmployeeDropdown();
+                    showStatus('Employees loaded successfully.', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to load employees from the script.');
+                }
+            } catch (error) {
+                console.error('Load Employees Error:', error);
+                showStatus('Error loading employees. Check connection or script URL.', 'error');
+                // Use test data as a fallback for UI testing
+                employees = ['John Doe', 'Jane Smith', 'Peter Jones', 'Mary Williams'];
+                populateEmployeeDropdown();
+            }
+        }
+        
+        // Fills the employee dropdown menu
+        function populateEmployeeDropdown() {
+            employeeSelect.innerHTML = '<option value="">Select an employee...</option>';
+            employees.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee;
+                option.textContent = employee;
+                employeeSelect.appendChild(option);
+            });
+        }
+        
+        // Handles the punch in/out process
+        async function handlePunch(action) {
+            const employeeName = employeeSelect.value;
+            const dateOfBirth = dobInput.value;
+            
+            if (GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                showStatus('Configuration needed. Please set the Google Apps Script URL.', 'error');
+                return;
+            }
+
+            if (!employeeName) {
+                showStatus('Please select an employee.', 'error');
+                return;
+            }
+            if (!dateOfBirth) {
+                showStatus('Please enter your date of birth.', 'error');
+                return;
+            }
+            
+            setButtonsEnabled(false);
+            
+            try {
+                const actionText = action === 'in' ? 'Punching in' : 'Punching out';
+                showStatus(`${actionText}...`, 'info', true);
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Required for simple POST requests to Google Scripts
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Use text/plain for no-cors
+                    body: JSON.stringify({
+                        action: 'punch',
+                        employeeName: employeeName,
+                        dateOfBirth: dateOfBirth,
+                        punchType: action
+                    })
+                });
+
+                // NOTE: With 'no-cors', the response will be opaque. We cannot read the success message.
+                // We will optimistically assume success if the fetch doesn't throw an error.
+                // The actual success/error state will be visible in the Google Sheet.
+                // For a better UX, a more complex setup (not possible here) would be needed.
+                
+                const successMessage = action === 'in' 
+                    ? `Punch-in for ${employeeName} recorded.` 
+                    : `Punch-out for ${employeeName} recorded.`;
+                showStatus(successMessage, 'success');
+                
+                setTimeout(() => {
+                    employeeSelect.value = '';
+                    dobInput.value = '';
+                }, 2500);
+
+            } catch (error) {
+                console.error('Punch Error:', error);
+                showStatus('Connection error. Please try again.', 'error');
+            } finally {
+                setButtonsEnabled(true);
+            }
+        }
+        
+        // --- UI Helper Functions ---
+
+        // Displays a status message to the user
+        function showStatus(message, type = 'info', loading = false) {
+            statusMessage.className = `status-message mt-6 p-3 rounded-lg font-semibold status-${type}`;
+            statusMessage.innerHTML = loading 
+                ? `<div class="loading-spinner mr-3"></div><span>${message}</span>`
+                : message;
+            
+            statusMessage.classList.add('show');
+            
+            if (!loading) {
+                setTimeout(() => statusMessage.classList.remove('show'), 5000);
+            }
+        }
+        
+        // Enables or disables the punch buttons to prevent double-clicks
+        function setButtonsEnabled(enabled) {
+            punchInBtn.disabled = !enabled;
+            punchOutBtn.disabled = !enabled;
+            punchInBtn.classList.toggle('opacity-50', !enabled);
+            punchInBtn.classList.toggle('cursor-not-allowed', !enabled);
+            punchOutBtn.classList.toggle('opacity-50', !enabled);
+            punchOutBtn.classList.toggle('cursor-not-allowed', !enabled);
+        }
+
+        // --- Particle Background Effect ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particlesArray;
+
+        function initParticles(particleCount = 70) {
+            particlesArray = [];
+            for (let i = 0; i < particleCount; i++) {
+                let size = Math.random() * 2 + 1;
+                let x = Math.random() * canvas.width;
+                let y = Math.random() * canvas.height;
+                let directionX = (Math.random() * 0.4) - 0.2;
+                let directionY = (Math.random() * 0.4) - 0.2;
+                particlesArray.push({ x, y, directionX, directionY, size });
+            }
+        }
+
+        function animateParticles() {
+            requestAnimationFrame(animateParticles);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            ctx.fillStyle = 'rgba(0, 212, 255, 0.7)';
+            for (let p of particlesArray) {
+                p.x += p.directionX;
+                p.y += p.directionY;
+                if (p.x > canvas.width || p.x < 0) p.directionX *= -1;
+                if (p.y > canvas.height || p.y < 0) p.directionY *= -1;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        window.addEventListener('resize', () => {
+            canvas.width = innerWidth;
+            canvas.height = innerHeight;
+            initParticles();
+        });
+
+        initParticles();
+        animateParticles();
+    </script>
+</body>
+</html>
+
