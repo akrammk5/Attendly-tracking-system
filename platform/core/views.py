@@ -261,7 +261,7 @@ def correct_shift(request, slug, shift_id):
             ).exclude(pk=item.pk).exists()
             if conflicting:
                 raise ValueError
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OverflowError):
             messages.error(request, "Enter valid local times (up to 36 hours), without overlapping another shift.")
         else:
             with transaction.atomic():
@@ -356,7 +356,7 @@ def export_csv(request, slug):
     response["Content-Disposition"] = 'attachment; filename="attendly-report.csv"'
     writer = csv.writer(response)
     writer.writerow(["Employee", "Email", "Location", "Start UTC", "End UTC", "Net Hours", "Corrected"])
-    for shift in entries.iterator():
+    for shift in entries.iterator(chunk_size=200):
         writer.writerow([csv_safe(shift.user.get_full_name() or shift.user.email),
             csv_safe(shift.user.email), csv_safe(shift.location.name if shift.location else ""),
             shift.started_at.isoformat(), shift.ended_at.isoformat() if shift.ended_at else "",
