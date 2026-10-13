@@ -40,7 +40,7 @@ Prerequisites: Python 3.13, PostgreSQL for production. SQLite is supported only 
     python manage.py createsuperuser
     python manage.py runserver
 
-Visit /signup/ to create a sample company and its primary owner, /accounts/login/ for sign in, /django-admin/ for the platform operator console. Create a sample employee by logging in as owner, configuring SMTP and sending an invitation.
+Visit /signup/ to create a sample company and its primary owner, /accounts/login/ for sign in, /django-admin/ for the platform operator console. A newly registered owner must click the signed activation link emailed to them before logging in. In local development without SMTP, Django prints the email to the server console. For employee onboarding, configure SMTP and send a secure invitation from the admin dashboard.
 
 Automated checks:
 
@@ -59,15 +59,16 @@ Automated checks:
 6. Configure monitors for healthz, database, service errors and payment reconciliation. Run penetration tests, E2E UI, concurrency load tests with a real PostgreSQL instance, browser/device/accessibility audits, backup recovery drills and privacy review.
 7. Publish accurate terms, privacy/cookie policy, DPA, data retention/deletion schedule, refund policy and official support contacts. Verify claims and clear whether the license is per company and how many seats are included.
 8. Migrate employees and attendance from the old Google Sheet through a reviewed one-time importer (not included). Do not copy dates of birth or public legacy URLs. Reconcile totals, preserve history, notify customers, and disable the old public Apps Script deployment.
-9. Gate signup behind verified email or invite-only company provisioning and add sitewide registration rate limiting/bot protection before a large public launch.
+9. Email verification is required for company registration. Add sitewide signup throttling/bot controls and a cleanup task for inactive registrations before a large public launch.
 
 ## Limits and risks
 
 - **Not yet a certified payroll or HRIS**: no automated overtime calculations, jurisdiction-specific leave accrual, schedules/rotas, holiday calendars, clock corrections that preserve historical break intervals, GPS/geofence, 2FA/SSO, PDF payslips or mobile apps.
 - **Not yet a finished commercial checkout**: payment requires real merchant configuration, price verification, refund/chargeback synchronization, tax/invoicing, legal terms, support and real paid webhook tests. Never advertise an unverified purchase as delivered.
+- **Email verification**: new company owners must activate their account by clicking a time-limited emailed link. SMTP must be configured in production. Invitations also require email; production does not fall back to console mail.
 - **No live deployment**: GitHub CI validates models/routes in a simulated environment; only staging testing can verify SMTP, Stripe, DB locking under concurrent traffic and real accessibility.
 - The administrator correction flow clears break records and cannot represent DST-ambiguous local timestamps without manual review. Correct times only with a manager-approved process.
-- Team self-signup currently permits unverified email claims. Use invitation-only or verify email ownership before unrestricted multi-company access.
+- Company signup sends a signed email-verification link and accounts remain inactive until confirmed. Registration still needs abuse protection, administrative tenant verification for high-risk customers, and automated cleanup of expired unverified accounts.
 - Current trial seats default to 25; the paid plan seat count should be based on commercial policy and linked to a verified Stripe product.
 - Audit records are application protected but database admins can alter them; immutability/export retention need infrastructure.
 - PostgreSQL row locks are relied on for simultaneous punches. The development SQLite database is not a proxy for production load behavior.
