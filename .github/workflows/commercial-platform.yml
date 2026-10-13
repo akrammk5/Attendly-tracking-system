@@ -1,0 +1,45 @@
+name: Commercial platform CI
+on:
+  push:
+    paths:
+      - 'platform/**'
+      - '.github/workflows/commercial-platform.yml'
+  pull_request:
+    paths:
+      - 'platform/**'
+      - '.github/workflows/commercial-platform.yml'
+permissions:
+  contents: read
+jobs:
+  django:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: platform
+    env:
+      DJANGO_DEBUG: '1'
+      DJANGO_SECRET_KEY: ci-testing-only-not-a-production-key
+      ATTENDLY_TEST_SQLITE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install application
+        run: python -m pip install -r requirements.txt
+      - name: Django system checks
+        run: python manage.py check
+      - name: Database migration consistency
+        run: python manage.py makemigrations --check --dry-run
+      - name: Run security and business logic tests
+        run: python manage.py test core -v 2
+      - name: Collect static frontend assets
+        run: python manage.py collectstatic --noinput
+      - name: Validate production settings
+        env:
+          DJANGO_DEBUG: '0'
+          ATTENDLY_TEST_SQLITE: '1'
+          DJANGO_ALLOWED_HOSTS: example.com
+          DJANGO_CSRF_TRUSTED_ORIGINS: https://example.com
+        run: python manage.py check --deploy
