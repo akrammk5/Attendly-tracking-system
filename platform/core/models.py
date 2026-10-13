@@ -142,5 +142,7 @@ class Payment(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     stripe_session_id = models.CharField(max_length=200, unique=True)
     stripe_event_id = models.CharField(max_length=200, blank=True, default="")
+    stripe_payment_intent_id = models.CharField(max_length=200, null=True, blank=True, unique=True)
+    refunded_at = models.DateTimeField(null=True, blank=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
