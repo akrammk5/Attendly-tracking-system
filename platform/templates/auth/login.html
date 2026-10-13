@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% block title %}Welcome back{% endblock %}{% block content %}
+<div class="public-card"><a href="{% url 'login' %}" class="public-logo">attendly<span>.</span></a><div class="eyebrow">WELCOME BACK</div><h1>Sign in to your workspace</h1><p>One place for your team's time, people and progress.</p>
+<form method="post" class="stack-form">{% csrf_token %}
+{% if form.non_field_errors %}<div class="notice warning">{{ form.non_field_errors }}</div>{% endif %}
+<div class="field"><label for="id_username">Work email</label><input id="id_username" name="username" type="email" autocomplete="username" required autofocus></div>
+<div class="field"><label for="id_password">Password</label><input id="id_password" name="password" type="password" autocomplete="current-password" required></div>
+{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+<button type="submit" class="btn btn-primary">Sign in securely →</button></form>
+<p class="auth-alt"><a href="{% url 'password_reset' %}">Forgot password?</a></p><p class="auth-alt">New to Attendly? <a href="{% url 'signup' %}">Create a workspace</a></p></div>{% endblock %}

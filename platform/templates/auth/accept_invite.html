@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block title %}Join your team{% endblock %}{% block content %}
+<div class="public-card"><div class="public-logo">attendly<span>.</span></div><div class="eyebrow">TEAM INVITATION</div><h1>You're invited.</h1><p>Join <strong>{{ invitation.company.name }}</strong> with the {{ invitation.get_role_display|lower }} role. The invitation is tied to <strong>{{ invitation.email }}</strong>.</p>
+{% if request.user.is_authenticated %}<form method="post" class="stack-form">{% csrf_token %}<button class="btn btn-primary" type="submit">Accept invitation →</button></form>
+{% else %}<form method="post" class="stack-form">{% csrf_token %}<div class="field"><label for="id_password">Set your private password (12+ characters)</label>{{ form.password }}{{ form.password.errors }}</div><button class="btn btn-primary" type="submit">Create my account →</button></form><p class="auth-alt">Have an account? <a href="{% url 'login' %}">Sign in first</a>, then open the invitation again.</p>{% endif %}
+</div>{% endblock %}

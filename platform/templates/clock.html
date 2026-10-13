@@ -1,0 +1,33 @@
+{% extends 'base.html' %}{% load tz %}
+{% block title %}My time clock{% endblock %}{% block breadcrumb %}My time clock{% endblock %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">PERSONAL WORKSPACE</div><h1>Good to see you.</h1><p>Record your workday, breaks and finish times. All entries use secure server time.</p></div></div>
+<div class="clock-grid">
+ <section class="panel clock-card">
+   <div class="eyebrow">YOUR TIME CLOCK</div>
+   <div class="digital-clock" data-local-clock>--:--:--</div><div class="clock-date">{{ local_now|date:"l, F j, Y" }} · Device time shown above</div>
+   <div class="clock-divider"></div>
+   {% if current %}
+   <div class="status-line"><span class="pill live"><span class="green-dot"></span>{% if on_break %}On break{% else %}Clocked in{% endif %}</span><span>Since {% timezone company.timezone %}{{ current.started_at|date:"H:i" }}{% endtimezone %}</span></div>
+   {% else %}
+   <div class="status-line"><span class="pill muted">Not clocked in</span><span>Ready when you are</span></div>
+   {% endif %}
+   <form method="post" class="clock-form">{% csrf_token %}
+    {% if not current %}
+    {% if locations %}<label for="location">Work location</label><select name="location" id="location"><option value="">Remote / Not specified</option>{% for location in locations %}<option value="{{ location.id }}">{{ location.name }}</option>{% endfor %}</select>{% endif %}
+    <button class="btn btn-primary big-action" type="submit" name="action" value="in" {% if not company.is_entitled %}disabled{% endif %}>↗ &nbsp; Clock in now</button>
+    {% else %}
+    {% if on_break %}<button class="btn btn-primary big-action" type="submit" name="action" value="break_end">▶ &nbsp; End break</button>{% else %}<button class="btn btn-secondary big-action" type="submit" name="action" value="break_start">Ⅱ &nbsp; Start break</button>{% endif %}
+    <button class="btn btn-dark big-action" type="submit" name="action" value="out">✓ &nbsp; Clock out</button>
+    {% endif %}
+   </form>
+   <div class="clock-note"><span>◈</span> The server confirms each action before your dashboard updates. No GPS tracking is performed.</div>
+ </section>
+ <section class="panel"><div class="panel-head"><div><h2>Recent shifts</h2><p>Your recorded work sessions.</p></div></div>
+ <div class="shift-list">
+ {% for shift in history %}<div class="shift-row"><span class="shift-date">{% timezone company.timezone %}{{ shift.started_at|date:"M d" }}{% endtimezone %}</span>
+ <span class="shift-detail">{% timezone company.timezone %}{{ shift.started_at|date:"H:i" }}{% endtimezone %} — {% if shift.ended_at %}{% timezone company.timezone %}{{ shift.ended_at|date:"H:i" }}{% endtimezone %}{% else %}Now{% endif %}<small>{% if shift.ended_at %}{{ shift.hours }} h net{% else %}Currently working{% endif %}</small></span>
+ <span class="pill {% if shift.ended_at %}muted{% else %}live{% endif %}">{% if shift.ended_at %}Done{% else %}Active{% endif %}</span></div>{% empty %}<p class="empty-state">No recorded shifts yet. Clock in to begin.</p>{% endfor %}
+ </div></section>
+</div>
+{% endblock %}

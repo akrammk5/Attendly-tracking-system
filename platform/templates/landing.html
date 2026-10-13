@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Simple time tracking for modern teams{% endblock %}
+{% block content %}
+<div class="landing">
+  <div class="landing-intro">
+    <div class="landing-copy">
+      <div class="landing-chip"><span class="green-dot"></span> YOUR WORKFORCE, IN SYNC</div>
+      <h1>Make every workday <em>count.</em></h1>
+      <p>From the first clock-in to the final report, Attendly brings your people, time tracking and team management together in one beautifully simple workspace.</p>
+      <div class="landing-ctas"><a href="{% url 'signup' %}" class="btn btn-primary">Start your 14-day trial <span aria-hidden="true">→</span></a><a href="#features" class="btn btn-secondary">Explore features ↓</a></div>
+      <div class="landing-trust"><span>✓ No credit card to start</span><span>✓ Separate company workspaces</span><span>✓ Exportable time records</span></div>
+    </div>
+    <div class="landing-preview" aria-label="Example Attendly management dashboard">
+      <div class="preview-bar"><span class="preview-brand">◷ attendly<span>.</span></span><span class="preview-dots">● ● ●</span></div>
+      <div class="preview-body">
+        <div class="preview-welcome"><div><small>YOUR WORKSPACE</small><h2>Morning, team! 👋</h2><p>Here's how your day is shaping up.</p></div><div class="preview-avatar">AM</div></div>
+        <div class="preview-metrics"><div><small>Team members</small><strong>24</strong><span>↗ Active workspace</span></div><div><small>Working now</small><strong>18</strong><span>● Live attendance</span></div><div><small>Leave requests</small><strong>03</strong><span>Waiting review</span></div></div>
+        <div class="preview-table"><div class="preview-table-title">Recent activity <span>See all →</span></div><div class="preview-person"><span class="preview-circle sea">AK</span><span>Alex Kim<small>Clocked in · 08:31 AM</small></span><b class="preview-pill">In progress</b></div><div class="preview-person"><span class="preview-circle blue">MJ</span><span>Maya Jones<small>Completed shift · Yesterday</small></span><b class="preview-pill neutral">Completed</b></div><div class="preview-person"><span class="preview-circle violet">TR</span><span>Taylor Reed<small>Clocked in · 09:02 AM</small></span><b class="preview-pill">In progress</b></div></div>
+      </div>
+      <div class="preview-caption">Illustrative interface · Sample data only</div>
+    </div>
+  </div>
+  <section id="features" class="landing-features">
+    <div class="section-center"><div class="eyebrow">EVERYTHING WORKS TOGETHER</div><h2>Less admin. More momentum.</h2><p>Intuitive employee tools paired with everything a manager needs to stay informed.</p></div>
+    <div class="feature-grid">
+      <div class="feature-card"><span class="feature-icon">◷</span><h3>Time tracking</h3><p>Server-confirmed clock in/out, paid breaks and personal shift history without confusing spreadsheets.</p></div>
+      <div class="feature-card"><span class="feature-icon">♙</span><h3>Team management</h3><p>Invite colleagues, define owner/admin/manager/employee permissions and organize work locations.</p></div>
+      <div class="feature-card"><span class="feature-icon">▥</span><h3>Reporting</h3><p>Review attendance, correct time entries with audit trails and export dates to CSV.</p></div>
+      <div class="feature-card"><span class="feature-icon">▤</span><h3>Leave approvals</h3><p>Employees request time off while their managers review and approve requests in one place.</p></div>
+    </div>
+  </section>
+  <section class="landing-action" id="pricing"><div><div class="eyebrow">READY TO GET ORGANIZED?</div><h2>One workspace. A better workday.</h2><p>Explore Attendly with a 14-day company trial. Payment activation uses secure hosted checkout when commercial billing is configured.</p><a href="{% url 'signup' %}" class="btn btn-primary">Create your company workspace →</a></div></section>
+</div>
+{% endblock %}

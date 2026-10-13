@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% block title %}Team{% endblock %}{% block breadcrumb %}Team{% endblock %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">PEOPLE & ACCESS</div><h1>Team members</h1><p>Manage employee access across your company workspace.</p></div>
+{% if member.role == "owner" or member.role == "admin" %}<a class="btn btn-primary" href="{% url 'invite' company.slug %}">+ Invite member</a>{% endif %}</div>
+<div class="panel"><div class="panel-head"><h2>Directory</h2><span class="pill muted">{{ people|length }} of {{ company.seats }} seats</span></div>
+<div class="table-wrap"><table><thead><tr><th>Member</th><th>Role</th><th>Access</th><th>Manage</th></tr></thead><tbody>
+{% for m in people %}<tr><td><div class="person"><span class="person-avatar">{{ m.user.email|first|upper }}</span><span><strong>{{ m.user.get_full_name|default:m.user.email }}</strong><small>{{ m.user.email }}</small></span></div></td>
+<td><span class="pill muted">{{ m.get_role_display }}</span></td><td><span class="pill {% if m.active %}live{% else %}muted{% endif %}">{% if m.active %}Active{% else %}Disabled{% endif %}</span></td>
+<td>{% if member.role == "owner" or member.role == "admin" %}{% if m.role != "owner" %}
+<form method="post" action="{% url 'update_team' company.slug m.pk %}" class="inline-form">{% csrf_token %}<label class="sr-only" for="role-{{ m.pk }}">Change role</label><select id="role-{{ m.pk }}" name="role"><option value="employee" {% if m.role == "employee" %}selected{% endif %}>Employee</option><option value="manager" {% if m.role == "manager" %}selected{% endif %}>Manager</option><option value="admin" {% if m.role == "admin" %}selected{% endif %}>Admin</option></select><button class="btn btn-small" type="submit">Save</button></form>
+{% if m.active %}<form method="post" action="{% url 'update_team' company.slug m.pk %}" class="inline-form">{% csrf_token %}<button class="btn btn-small btn-danger" type="submit" name="action" value="deactivate">Disable</button></form>{% endif %}
+{% else %}<span class="subtle">Primary owner</span>{% endif %}{% else %}<span class="subtle">View only</span>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="4" class="empty-cell">No team members yet.</td></tr>{% endfor %}</tbody></table></div></div>
+{% if invites %}<div class="panel section-gap"><div class="panel-head"><h2>Pending invitations</h2></div>
+<div class="table-wrap"><table><thead><tr><th>Email</th><th>Role</th><th>Expires</th></tr></thead><tbody>{% for inv in invites %}<tr><td>{{ inv.email }}</td><td>{{ inv.get_role_display }}</td><td>{{ inv.expires_at|date:"M j, Y" }}</td></tr>{% endfor %}</tbody></table></div></div>{% endif %}
+{% endblock %}

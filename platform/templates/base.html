@@ -1,0 +1,74 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c1e2c">
+  <meta name="description" content="Attendly helps companies manage staff time, shifts and leave in one place.">
+  <title>{% block title %}Attendly{% endblock %} · Attendly</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/marketing.css' %}">
+  <script defer src="{% static 'js/app.js' %}"></script>
+</head>
+<body class="{% if not company %}public-page{% endif %}">
+<div class="app-shell">
+  {% if company %}
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="{% url 'dashboard' company.slug %}" aria-label="Attendly home">
+      <span class="brand-icon" aria-hidden="true">◷</span><span>attendly<span class="brand-dot">.</span></span>
+    </a>
+    <div class="workspace-caption">WORKSPACE</div>
+    <div class="workspace"><span class="workspace-avatar">{{ company.name|first|upper }}</span>
+      <span class="workspace-details"><strong>{{ company.name }}</strong><small>{{ member.get_role_display }}</small></span></div>
+    {% if workspaces|length > 1 %}<div class="workspace-links"><div class="workspace-caption">SWITCH COMPANY</div>{% for ws in workspaces %}{% if ws.company_id != company.id %}<a href="{% url 'dashboard' ws.company.slug %}">{{ ws.company.name }} →</a>{% endif %}{% endfor %}</div>{% endif %}
+    <nav class="nav-items" aria-label="Main menu">
+      <span class="nav-title">OVERVIEW</span>
+      {% if member.role != "employee" %}
+      <a href="{% url 'dashboard' company.slug %}" class="{% if request.resolver_match.url_name == 'dashboard' %}selected{% endif %}"><span aria-hidden="true">▦</span> Dashboard</a>
+      {% endif %}
+      <a href="{% url 'clock' company.slug %}" class="{% if request.resolver_match.url_name == 'clock' %}selected{% endif %}"><span aria-hidden="true">◷</span> My time clock</a>
+      <a href="{% url 'leave' company.slug %}" class="{% if request.resolver_match.url_name == 'leave' %}selected{% endif %}"><span aria-hidden="true">▤</span> Leave requests</a>
+      {% if member.role != "employee" %}
+      <span class="nav-title">MANAGEMENT</span>
+      <a href="{% url 'team' company.slug %}" class="{% if request.resolver_match.url_name == 'team' %}selected{% endif %}"><span aria-hidden="true">♙</span> Team members</a>
+      <a href="{% url 'shifts' company.slug %}" class="{% if request.resolver_match.url_name == 'shifts' %}selected{% endif %}"><span aria-hidden="true">▣</span> Shift records</a>
+      <a href="{% url 'reports' company.slug %}" class="{% if request.resolver_match.url_name == 'reports' %}selected{% endif %}"><span aria-hidden="true">▥</span> Reports & exports</a>
+      {% endif %}
+      {% if member.role == "owner" or member.role == "admin" %}
+      <span class="nav-title">ORGANIZATION</span>
+      <a href="{% url 'locations' company.slug %}" class="{% if request.resolver_match.url_name == 'locations' %}selected{% endif %}"><span aria-hidden="true">⌖</span> Locations</a>
+      <a href="{% url 'audit' company.slug %}" class="{% if request.resolver_match.url_name == 'audit' %}selected{% endif %}"><span aria-hidden="true">☷</span> Activity log</a>
+      {% endif %}
+      {% if member.role == "owner" %}
+      <a href="{% url 'billing' company.slug %}" class="{% if request.resolver_match.url_name == 'billing' %}selected{% endif %}"><span aria-hidden="true">◇</span> Billing & license</a>
+      <a href="{% url 'settings' company.slug %}" class="{% if request.resolver_match.url_name == 'settings' %}selected{% endif %}"><span aria-hidden="true">⚙</span> Settings</a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-bottom"><div class="avatar">{{ request.user.email|first|upper }}</div>
+      <span class="sidebar-profile"><strong>{{ request.user.email|truncatechars:28 }}</strong><small>My account</small></span>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="logout" title="Log out" aria-label="Log out">↗</button></form>
+    </div>
+  </aside>
+  {% endif %}
+  <div class="main-region">
+    <header class="topbar">
+      <div class="topbar-start">
+        {% if company %}<button type="button" class="mobile-menu" data-toggle-sidebar aria-controls="sidebar" aria-expanded="false" aria-label="Open navigation">☰</button>{% endif %}
+        <span class="topbar-eyebrow">{% if company %}{{ company.name }} / {% block breadcrumb %}Workspace{% endblock %}{% else %}ATTENDLY WORKFORCE OS{% endif %}</span>
+      </div>
+      <div class="topbar-end"><span class="online-dot"></span><span>Secure workspace</span>{% if not company %}<a href="{% url 'login' %}" class="text-link">Sign in</a>{% endif %}</div>
+    </header>
+    <main id="main-content" class="page">
+      {% if messages %}
+      <div aria-live="polite" class="flash-stack">
+        {% for message in messages %}<div class="flash {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>{% endfor %}
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="app-footer"><span>© 2026 Attendly</span><span>Designed for teams that move forward.</span></footer>
+  </div>
+</div>
+</body>
+</html>

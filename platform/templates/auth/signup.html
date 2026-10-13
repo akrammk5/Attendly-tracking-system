@@ -1,0 +1,6 @@
+{% extends 'base.html' %}{% block title %}Start your workspace{% endblock %}{% block content %}
+<div class="public-card"><a href="{% url 'login' %}" class="public-logo">attendly<span>.</span></a><div class="eyebrow">14-DAY WORKSPACE TRIAL</div><h1>Build a better workday.</h1><p>Create your company space, invite your team and start tracking time.</p>
+<form method="post" class="stack-form">{% csrf_token %}{{ form.non_field_errors }}
+{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}
+<button type="submit" class="btn btn-primary">Create workspace →</button></form>
+<p class="auth-alt">Already have an account? <a href="{% url 'login' %}">Sign in</a></p></div>{% endblock %}
