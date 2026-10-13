@@ -341,3 +341,29 @@ class AttendlyPlatformTests(TestCase):
         self.assertEqual(again.status_code, 302)
         self.assertEqual(again.url, reverse("login"))
         self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_secure_initial_admin_setup_uses_one_time_invitation(self):
+        import hashlib
+        from .models import Invitation
+        admin = get_user_model().objects.create_user(
+            username="boot-admin@example.com", email="boot-admin@example.com",
+            password=None, is_active=False, is_staff=True, is_superuser=True)
+        Membership.objects.create(company=self.company_a, user=admin, role=Membership.ADMIN)
+        token = "safe-test-setup-link-with-real-randomness-on-production"
+        invitation = Invitation.objects.create(company=self.company_a, email=admin.email,
+            role=Membership.ADMIN, token_hash=hashlib.sha256(token.encode()).hexdigest(),
+            expires_at=timezone.now() + timedelta(hours=24), created_by=self.owner_a)
+        url = reverse("accept_invite", args=[token])
+        response = self.client.post(url, {"password": "long-secure-initial-admin-password-2026"})
+        self.assertEqual(response.status_code, 302)
+        admin.refresh_from_db()
+        invitation.refresh_from_db()
+        self.assertTrue(admin.is_active)
+        self.assertTrue(admin.has_usable_password())
+        self.assertTrue(admin.check_password("long-secure-initial-admin-password-2026"))
+        self.assertIsNotNone(invitation.accepted_at)
+        self.client.post(reverse("logout"))
+        again = self.client.post(url, {"password": "another-strong-password-change-attempt"})
+        self.assertEqual(again.status_code, 410)
+        admin.refresh_from_db()
+        self.assertFalse(admin.check_password("another-strong-password-change-attempt"))
