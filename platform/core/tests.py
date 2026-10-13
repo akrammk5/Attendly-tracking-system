@@ -31,7 +31,7 @@ class AttendlyPlatformTests(TestCase):
             "company": "New Ventures", "email": "founder@example.com",
             "password": "long-super-secure-founder-password-2026"
         })
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 302, str(response.context["form"].errors) if response.context else "")
         m = Membership.objects.get(user__email="founder@example.com")
         self.assertEqual(m.role, Membership.OWNER)
         self.assertEqual(m.company.name, "New Ventures")
@@ -156,7 +156,7 @@ class AttendlyPlatformTests(TestCase):
             "company": "Secure Email Ventures", "email": "verify-me@example.com",
             "password": "long-unique-verification-password-2026"
         })
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 302, str(response.context["form"].errors) if response.context else "")
         user = get_user_model().objects.get(email="verify-me@example.com")
         self.assertFalse(user.is_active)
         self.assertEqual(len(mail.outbox), 1)
