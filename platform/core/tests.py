@@ -9,7 +9,7 @@ from .models import Company, Membership, Shift, BreakPeriod, LeaveRequest, Audit
 from .services import ClockError, clock_action
 
 
-@override_settings(SECURE_SSL_REDIRECT=False, EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+@override_settings(SECURE_SSL_REDIRECT=False, EMAIL_HOST="smtp.test.invalid", EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 class AttendlyPlatformTests(TestCase):
     @classmethod
     def setUpTestData(cls):
