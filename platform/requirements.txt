@@ -3,3 +3,4 @@ gunicorn>=23,<24
 whitenoise>=6.9,<7
 psycopg[binary]>=3.2,<3.4
 stripe>=13,<17
+django-axes[ipware]>=8.3.1,<9
