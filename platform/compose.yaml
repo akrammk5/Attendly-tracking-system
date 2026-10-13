@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: attendly
+      POSTGRES_USER: attendly
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - attendly_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U attendly"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+  web:
+    build: .
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: "0"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:?set your host}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:?set https origin}
+      DJANGO_SECURE_SSL_REDIRECT: "1"
+      DATABASE_URL: postgresql://attendly:${POSTGRES_PASSWORD}@db:5432/attendly
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PRICE_ID: ${STRIPE_PRICE_ID:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      DJANGO_EMAIL_HOST: ${DJANGO_EMAIL_HOST:-}
+      DJANGO_EMAIL_HOST_USER: ${DJANGO_EMAIL_HOST_USER:-}
+      DJANGO_EMAIL_HOST_PASSWORD: ${DJANGO_EMAIL_HOST_PASSWORD:-}
+      DJANGO_EMAIL_FROM: ${DJANGO_EMAIL_FROM:-no-reply@example.invalid}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+volumes:
+  attendly_pgdata:
