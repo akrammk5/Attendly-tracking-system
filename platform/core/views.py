@@ -1,4 +1,5 @@
 import csv
+import logging
 import hashlib
 import secrets
 from datetime import datetime, timedelta
@@ -87,6 +88,7 @@ def signup(request):
                         settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
                     audit_record(company, user, "company.created", "Pending email verification")
             except Exception:
+                logging.getLogger(__name__).exception("Owner signup verification failed")
                 form.add_error(None, "Unable to send a verification email. Check email configuration.")
             else:
                 messages.success(request, "Check your email for an activation link before signing in.")
