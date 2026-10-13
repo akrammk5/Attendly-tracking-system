@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 from django.core.exceptions import ImproperlyConfigured
@@ -10,6 +11,11 @@ if not SECRET_KEY:
     raise ImproperlyConfigured("Set DJANGO_SECRET_KEY for production.")
 ALLOWED_HOSTS = [v.strip() for v in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,testserver").split(",") if v.strip()]
 CSRF_TRUSTED_ORIGINS = [v.strip() for v in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if v.strip()]
+# Trusted Vercel-generated deployment hostname, not an unvalidated Host header.
+vercel_hostname = os.getenv("VERCEL_URL", "")
+if re.fullmatch(r"[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.vercel\.app", vercel_hostname):
+    ALLOWED_HOSTS.append(vercel_hostname)
+    CSRF_TRUSTED_ORIGINS.append("https://" + vercel_hostname)
 INSTALLED_APPS = ["django.contrib.admin", "django.contrib.auth", "django.contrib.contenttypes",
                   "django.contrib.sessions", "django.contrib.messages", "django.contrib.staticfiles",
                   "core", "axes"]
