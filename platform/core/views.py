@@ -470,15 +470,37 @@ def stripe_webhook(request):
         )
     except (ValueError, stripe.error.SignatureVerificationError):
         return HttpResponse(status=400)
-    if event["type"] == "checkout.session.completed":
-        payload = event["data"]["object"]
+    kind = event["type"]
+    payload = event["data"]["object"]
+    if kind in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
         if payload.get("payment_status") == "paid" and payload.get("mode") == "payment":
             with transaction.atomic():
                 payment = Payment.objects.select_for_update().filter(stripe_session_id=payload.get("id")).first()
                 if payment and str(payment.company_id) == str(payload.get("client_reference_id")) and not payment.paid_at:
+                    Company.objects.select_for_update().get(pk=payment.company_id)
                     payment.paid_at = timezone.now()
                     payment.stripe_event_id = str(event["id"])[:200]
-                    payment.save(update_fields=["paid_at", "stripe_event_id"])
+                    payment.stripe_payment_intent_id = payload.get("payment_intent") or None
+                    payment.save(update_fields=["paid_at", "stripe_event_id", "stripe_payment_intent_id"])
                     Company.objects.filter(pk=payment.company_id).update(license_active=True)
                     audit_record(payment.company, None, "license.activated", "verified Stripe checkout")
+    elif kind == "charge.refunded" and payload.get("refunded") is True:
+        # Partial refunds do not revoke licenses. Only full charge refunds do.
+        intent_id = payload.get("payment_intent")
+        if intent_id:
+            with transaction.atomic():
+                payment = Payment.objects.select_for_update().filter(
+                    stripe_payment_intent_id=intent_id, paid_at__isnull=False, refunded_at__isnull=True
+                ).first()
+                if payment:
+                    Company.objects.select_for_update().get(pk=payment.company_id)
+                    payment.refunded_at = timezone.now()
+                    payment.stripe_event_id = str(event["id"])[:200]
+                    payment.save(update_fields=["refunded_at", "stripe_event_id"])
+                    has_other_payment = Payment.objects.filter(
+                        company_id=payment.company_id, paid_at__isnull=False, refunded_at__isnull=True
+                    ).exists()
+                    if not has_other_payment:
+                        Company.objects.filter(pk=payment.company_id).update(license_active=False)
+                    audit_record(payment.company, None, "license.refunded", "verified full payment refund")
     return HttpResponse(status=200)
