@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core import signing
 from django.core.mail import send_mail
 from django.db import IntegrityError, connection, transaction
 from django.db.models import Count, Q
@@ -47,7 +48,8 @@ def company_scope(request, slug, roles=None):
 
 
 def page(request, template, company, member, **kwargs):
-    return render(request, template, {"company": company, "member": member, **kwargs})
+    workspaces = Membership.objects.filter(user=request.user, active=True).select_related("company")
+    return render(request, template, {"company": company, "member": member, "workspaces": workspaces, **kwargs})
 
 
 @login_required
@@ -65,19 +67,47 @@ def signup(request):
     if request.method == "POST" and form.is_valid():
         data = form.cleaned_data
         user_model = get_user_model()
-        if user_model.objects.filter(username__iexact=data["email"]).exists():
+        if not settings.DEBUG and not settings.EMAIL_HOST:
+            form.add_error(None, "Workspace registration is unavailable until email verification is configured.")
+        elif user_model.objects.filter(username__iexact=data["email"]).exists():
             form.add_error("email", "An account with this email already exists.")
         else:
-            slug = slugify(data["company"])[:65] or "company"
-            slug += "-" + secrets.token_hex(4)
-            with transaction.atomic():
-                user = user_model.objects.create_user(username=data["email"], email=data["email"], password=data["password"])
-                company = Company.objects.create(name=data["company"], slug=slug)
-                Membership.objects.create(company=company, user=user, role=Membership.OWNER)
-                audit_record(company, user, "company.created")
-            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-            return redirect("dashboard", slug=company.slug)
+            slug = (slugify(data["company"])[:65] or "company") + "-" + secrets.token_hex(4)
+            try:
+                with transaction.atomic():
+                    user = user_model.objects.create_user(username=data["email"], email=data["email"],
+                        password=data["password"], is_active=False)
+                    company = Company.objects.create(name=data["company"], slug=slug)
+                    Membership.objects.create(company=company, user=user, role=Membership.OWNER)
+                    token = signing.dumps({"uid": user.pk}, salt="attendly-email-verification")
+                    url = request.build_absolute_uri(reverse("verify_email", args=[token]))
+                    send_mail("Verify your Attendly workspace email",
+                        "Confirm that you own this email to activate your account:\n" + url +
+                        "\n\nThis link expires after 48 hours.",
+                        settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+                    audit_record(company, user, "company.created", "Pending email verification")
+            except Exception:
+                form.add_error(None, "Unable to send a verification email. Check email configuration.")
+            else:
+                messages.success(request, "Check your email for an activation link before signing in.")
+                return redirect("login")
     return render(request, "auth/signup.html", {"form": form})
+
+
+def verify_email(request, token):
+    try:
+        value = signing.loads(token, salt="attendly-email-verification", max_age=172800)
+        user = get_object_or_404(get_user_model(), pk=value["uid"])
+    except (signing.BadSignature, signing.SignatureExpired, KeyError, ValueError, TypeError):
+        return render(request, "auth/invite_expired.html", status=410)
+    if not user.is_active:
+        user.is_active = True
+        user.save(update_fields=["is_active"])
+        membership = Membership.objects.filter(user=user, role=Membership.OWNER).select_related("company").first()
+        if membership:
+            audit_record(membership.company, user, "email.verified")
+    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    return redirect("home")
 
 
 def accept_invite(request, token):
@@ -267,11 +297,13 @@ def correct_shift(request, slug, shift_id):
             with transaction.atomic():
                 Company.objects.select_for_update().get(pk=company.pk)
                 item = Shift.objects.select_for_update().get(pk=item.pk, company=company)
+                if item.breaks.filter(Q(started_at__lt=start) | Q(started_at__gte=end) | Q(ended_at__gt=end)).exists():
+                    messages.error(request, "Recorded breaks fall outside the proposed shift. Have an administrator review the break history first.")
+                    return redirect("correct_shift", slug=slug, shift_id=item.pk)
                 previous = item.started_at.isoformat() + " / " + str(item.ended_at)
                 item.started_at, item.ended_at, item.corrected = start, end, True
                 item.note = request.POST.get("note", "")[:250]
                 item.save(update_fields=["started_at", "ended_at", "corrected", "note"])
-                item.breaks.all().delete()
                 audit_record(company, request.user, "shift.corrected", "shift:" + str(item.pk) + " previous:" + previous[:160])
             messages.success(request, "Shift corrected; previous times recorded in audit history.")
             return redirect("shifts", slug=slug)
