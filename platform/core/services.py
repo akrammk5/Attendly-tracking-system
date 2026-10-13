@@ -33,7 +33,7 @@ def clock_action(company, user, action, location_id=None):
     # just current open shift rows (there may be no row yet).
     locked_company = Company.objects.select_for_update().get(pk=company.pk)
     member = membership_for(user, locked_company)
-    if not locked_company.is_entitled:
+    if not locked_company.is_entitled and action == "in":
         raise ClockError("The company license is inactive. Ask your administrator.")
     if action not in ("in", "out", "break_start", "break_end"):
         raise ClockError("Unknown time clock action.")
