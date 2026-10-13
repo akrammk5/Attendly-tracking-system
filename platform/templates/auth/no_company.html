@@ -1,0 +1,3 @@
+{% extends 'base.html' %}{% block title %}No workspace{% endblock %}{% block content %}
+<div class="public-card"><div class="public-logo">attendly<span>.</span></div><h1>No active workspace</h1><p>Your account is not currently a member of an active Attendly company. Contact the company administrator for an invitation.</p>
+<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit" class="btn btn-secondary">Log out</button></form></div>{% endblock %}
