@@ -199,3 +199,48 @@ class AttendlyPlatformTests(TestCase):
         from django.core.exceptions import PermissionDenied
         with self.assertRaises(PermissionDenied):
             clock_action(self.company_a, self.staff_a, "in")
+
+    def test_marketing_page_has_trial_and_no_customer_claims(self):
+        response = self.client.get(reverse("landing"))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("Start your 14-day trial", html)
+        self.assertIn("Sample data only", html)
+        self.assertNotIn("Trusted by Industry Leaders", html)
+
+    def test_signed_paid_checkout_enables_exact_company_once(self):
+        from unittest.mock import patch
+        from .models import Payment
+        payment = Payment.objects.create(company=self.company_a, stripe_session_id="cs_test_attendly_alpha")
+        event = {"id": "evt_test_attendly", "type": "checkout.session.completed",
+                 "data": {"object": {"id": "cs_test_attendly_alpha", "mode": "payment",
+                                     "payment_status": "paid", "client_reference_id": str(self.company_a.pk)}}}
+        with override_settings(STRIPE_WEBHOOK_SECRET="whsec_test"):
+            with patch("stripe.Webhook.construct_event", return_value=event):
+                for _ in range(2):
+                    response = self.client.post(reverse("stripe_webhook"), data=b"{}",
+                                                content_type="application/json", HTTP_STRIPE_SIGNATURE="test_sig")
+                    self.assertEqual(response.status_code, 200)
+        payment.refresh_from_db()
+        self.company_a.refresh_from_db()
+        self.company_b.refresh_from_db()
+        self.assertIsNotNone(payment.paid_at)
+        self.assertTrue(self.company_a.license_active)
+        self.assertFalse(self.company_b.license_active)
+        self.assertEqual(AuditEvent.objects.filter(company=self.company_a, action="license.activated").count(), 1)
+
+    def test_fake_paid_checkout_never_licenses_other_company(self):
+        from unittest.mock import patch
+        from .models import Payment
+        Payment.objects.create(company=self.company_a, stripe_session_id="cs_test_alpha_only")
+        event = {"id": "evt_fake", "type": "checkout.session.completed",
+                 "data": {"object": {"id": "cs_test_alpha_only", "mode": "payment",
+                                     "payment_status": "paid", "client_reference_id": str(self.company_b.pk)}}}
+        with override_settings(STRIPE_WEBHOOK_SECRET="whsec_test"):
+            with patch("stripe.Webhook.construct_event", return_value=event):
+                self.assertEqual(self.client.post(reverse("stripe_webhook"), data=b"{}",
+                                  content_type="application/json", HTTP_STRIPE_SIGNATURE="test_sig").status_code, 200)
+        self.company_a.refresh_from_db()
+        self.company_b.refresh_from_db()
+        self.assertFalse(self.company_a.license_active)
+        self.assertFalse(self.company_b.license_active)
