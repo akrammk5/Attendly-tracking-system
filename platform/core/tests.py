@@ -244,3 +244,100 @@ class AttendlyPlatformTests(TestCase):
         self.company_b.refresh_from_db()
         self.assertFalse(self.company_a.license_active)
         self.assertFalse(self.company_b.license_active)
+
+    def test_full_refund_revokes_paid_license_idempotently(self):
+        from unittest.mock import patch
+        from .models import Payment
+        payment = Payment.objects.create(
+            company=self.company_a,
+            stripe_session_id="cs_test_full_refund",
+            stripe_payment_intent_id="pi_test_full_refund",
+            paid_at=timezone.now())
+        self.company_a.license_active = True
+        self.company_a.save(update_fields=["license_active"])
+        event = {"id": "evt_refund_test", "type": "charge.refunded",
+                 "data": {"object": {"refunded": True, "payment_intent": "pi_test_full_refund"}}}
+        with override_settings(STRIPE_WEBHOOK_SECRET="whsec_test"):
+            with patch("stripe.Webhook.construct_event", return_value=event):
+                for _ in range(2):
+                    result = self.client.post(reverse("stripe_webhook"), data=b"{}",
+                                              content_type="application/json", HTTP_STRIPE_SIGNATURE="test")
+                    self.assertEqual(result.status_code, 200)
+        payment.refresh_from_db()
+        self.company_a.refresh_from_db()
+        self.assertIsNotNone(payment.refunded_at)
+        self.assertFalse(self.company_a.license_active)
+        self.assertEqual(AuditEvent.objects.filter(company=self.company_a, action="license.refunded").count(), 1)
+
+    def test_partial_refund_does_not_revoke_license(self):
+        from unittest.mock import patch
+        from .models import Payment
+        payment = Payment.objects.create(
+            company=self.company_a, stripe_session_id="cs_test_partial",
+            stripe_payment_intent_id="pi_test_partial", paid_at=timezone.now())
+        self.company_a.license_active = True
+        self.company_a.save(update_fields=["license_active"])
+        event = {"id": "evt_partial", "type": "charge.refunded",
+                 "data": {"object": {"refunded": False, "payment_intent": "pi_test_partial"}}}
+        with override_settings(STRIPE_WEBHOOK_SECRET="whsec_test"):
+            with patch("stripe.Webhook.construct_event", return_value=event):
+                result = self.client.post(reverse("stripe_webhook"), data=b"{}",
+                                          content_type="application/json", HTTP_STRIPE_SIGNATURE="test")
+        self.assertEqual(result.status_code, 200)
+        payment.refresh_from_db()
+        self.company_a.refresh_from_db()
+        self.assertIsNone(payment.refunded_at)
+        self.assertTrue(self.company_a.license_active)
+
+    def test_refund_does_not_revoke_other_active_payments(self):
+        from unittest.mock import patch
+        from .models import Payment
+        paid = timezone.now()
+        old = Payment.objects.create(company=self.company_a, stripe_session_id="cs_test_old",
+            stripe_payment_intent_id="pi_old", paid_at=paid)
+        Payment.objects.create(company=self.company_a, stripe_session_id="cs_test_new",
+            stripe_payment_intent_id="pi_new", paid_at=paid)
+        self.company_a.license_active = True
+        self.company_a.save(update_fields=["license_active"])
+        event = {"id": "evt_old_refund", "type": "charge.refunded",
+                 "data": {"object": {"refunded": True, "payment_intent": "pi_old"}}}
+        with override_settings(STRIPE_WEBHOOK_SECRET="whsec_test"):
+            with patch("stripe.Webhook.construct_event", return_value=event):
+                result = self.client.post(reverse("stripe_webhook"), data=b"{}",
+                                          content_type="application/json", HTTP_STRIPE_SIGNATURE="test")
+        self.assertEqual(result.status_code, 200)
+        self.company_a.refresh_from_db()
+        self.assertTrue(self.company_a.license_active)
+
+    def test_async_checkout_activates_exact_licensed_company(self):
+        from unittest.mock import patch
+        from .models import Payment
+        Payment.objects.create(company=self.company_a, stripe_session_id="cs_test_async")
+        event = {"id": "evt_async_success", "type": "checkout.session.async_payment_succeeded",
+                 "data": {"object": {"id": "cs_test_async", "mode": "payment",
+                          "payment_status": "paid", "client_reference_id": str(self.company_a.pk),
+                          "payment_intent": "pi_async"}}}
+        with override_settings(STRIPE_WEBHOOK_SECRET="whsec_test"):
+            with patch("stripe.Webhook.construct_event", return_value=event):
+                result = self.client.post(reverse("stripe_webhook"), data=b"{}",
+                                          content_type="application/json", HTTP_STRIPE_SIGNATURE="test")
+        self.assertEqual(result.status_code, 200)
+        self.company_a.refresh_from_db()
+        self.assertTrue(self.company_a.license_active)
+        payment = Payment.objects.get(stripe_session_id="cs_test_async")
+        self.assertEqual(payment.stripe_payment_intent_id, "pi_async")
+
+    def test_verification_link_is_not_reusable_for_login(self):
+        from django.core import mail
+        from urllib.parse import urlparse
+        response = self.client.post(reverse("signup"), {
+            "company": "Link Safe Co", "email": "safe-verify@example.com",
+            "password": "long-unique-link-verification-password-2026"})
+        self.assertEqual(response.status_code, 302)
+        link = urlparse(mail.outbox[0].body.splitlines()[1]).path
+        self.assertEqual(self.client.get(link).status_code, 302)
+        self.client.post(reverse("logout"))
+        again = self.client.get(link)
+        self.assertEqual(again.status_code, 302)
+        self.assertEqual(again.url, reverse("login"))
+        self.assertNotIn("_auth_user_id", self.client.session)
