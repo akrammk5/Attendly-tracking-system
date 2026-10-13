@@ -1,0 +1,23 @@
+{% extends 'base.html' %}{% load tz %}
+{% block title %}Overview{% endblock %}{% block breadcrumb %}Overview{% endblock %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">WORKFORCE OVERVIEW</div><h1>Your team, at a glance.</h1><p>Keep your people, schedules and time records in sync.</p></div><a class="btn btn-primary" href="{% url 'team' company.slug %}">Manage team <span aria-hidden="true">↗</span></a></div>
+{% if not license_ok %}<div class="notice warning"><strong>Your trial has expired.</strong> New clock actions are paused. <a href="{% url 'billing' company.slug %}">Manage your license</a>.</div>{% endif %}
+<div class="metrics-grid">
+ <div class="metric"><div class="metric-title">Team members <span class="metric-icon">♙</span></div><div class="metric-value">{{ staff }}</div><div class="metric-foot">People with active access</div></div>
+ <div class="metric"><div class="metric-title">Working right now <span class="metric-icon">◷</span></div><div class="metric-value">{{ active }}</div><div class="metric-foot"><span class="green-dot"></span> Live active shifts</div></div>
+ <div class="metric"><div class="metric-title">Leave approvals <span class="metric-icon">▤</span></div><div class="metric-value">{{ pending }}</div><div class="metric-foot">Awaiting a manager decision</div></div>
+ <div class="metric"><div class="metric-title">Company license <span class="metric-icon">◇</span></div><div class="metric-value metric-small">{% if company.license_active %}Active{% elif license_ok %}Trial{% else %}Expired{% endif %}</div><div class="metric-foot">Your workspace status</div></div>
+</div>
+<div class="two-col">
+ <section class="panel"><div class="panel-head"><div><h2>Recent time activity</h2><p>Latest clock-ins and completed shifts.</p></div><a class="text-link" href="{% url 'shifts' company.slug %}">View all →</a></div>
+ <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Start</th><th>Status</th></tr></thead><tbody>
+ {% for shift in recent %}<tr><td><strong>{{ shift.user.get_full_name|default:shift.user.email }}</strong><small>{{ shift.location.name|default:"Remote / unspecified" }}</small></td><td>{% timezone company.timezone %}{{ shift.started_at|date:"M j, H:i" }}{% endtimezone %}</td><td><span class="pill {% if shift.ended_at %}muted{% else %}live{% endif %}">{% if shift.ended_at %}Completed{% else %}In progress{% endif %}</span></td></tr>{% empty %}<tr><td colspan="3" class="empty-cell">No shifts yet. Team members can start with My time clock.</td></tr>{% endfor %}
+ </tbody></table></div></section>
+ <section class="panel actions-panel"><div class="panel-head"><div><h2>Quick actions</h2><p>Everything you need, one click away.</p></div></div>
+ <a class="action-link" href="{% url 'clock' company.slug %}"><span class="action-icon aqua">◷</span><span><strong>Clock in or out</strong><small>Record your work time securely</small></span><span>↗</span></a>
+ <a class="action-link" href="{% url 'reports' company.slug %}"><span class="action-icon blue">▥</span><span><strong>Export time reports</strong><small>Get filtered CSV reports</small></span><span>↗</span></a>
+ <a class="action-link" href="{% url 'leave' company.slug %}"><span class="action-icon purple">▤</span><span><strong>Manage leave</strong><small>Review requests and balances</small></span><span>↗</span></a>
+ </section>
+</div>
+{% endblock %}
