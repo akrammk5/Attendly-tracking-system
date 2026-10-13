@@ -148,3 +148,54 @@ class AttendlyPlatformTests(TestCase):
     def test_healthcheck(self):
         response = self.client.get(reverse("health"))
         self.assertEqual(response.json()["status"], "ok")
+
+    def test_new_owner_must_verify_email_before_signin(self):
+        from django.core import mail
+        from urllib.parse import urlparse
+        response = self.client.post(reverse("signup"), {
+            "company": "Secure Email Ventures", "email": "verify-me@example.com",
+            "password": "long-unique-verification-password-2026"
+        })
+        self.assertEqual(response.status_code, 302)
+        user = get_user_model().objects.get(email="verify-me@example.com")
+        self.assertFalse(user.is_active)
+        self.assertEqual(len(mail.outbox), 1)
+        verify_url = mail.outbox[0].body.splitlines()[1]
+        path = urlparse(verify_url).path
+        verify_response = self.client.get(path)
+        self.assertEqual(verify_response.status_code, 302)
+        user.refresh_from_db()
+        self.assertTrue(user.is_active)
+
+    def test_clock_out_allowed_if_trial_expires_mid_shift(self):
+        clock_action(self.company_a, self.staff_a, "in")
+        self.company_a.trial_ends_at = timezone.now() - timedelta(days=1)
+        self.company_a.save()
+        message, shift = clock_action(self.company_a, self.staff_a, "out")
+        self.assertIn("clocked out", message.lower())
+        self.assertIsNotNone(shift.ended_at)
+
+    def test_manager_correction_preserves_break_history(self):
+        from zoneinfo import ZoneInfo
+        start = timezone.now() - timedelta(hours=7)
+        end = timezone.now() - timedelta(hours=1)
+        shift = Shift.objects.create(company=self.company_a, user=self.staff_a, started_at=start, ended_at=end)
+        BreakPeriod.objects.create(shift=shift, started_at=start + timedelta(hours=2), ended_at=start + timedelta(hours=2,minutes=30))
+        self.client.force_login(self.owner_a)
+        loc_start = timezone.localtime(start - timedelta(minutes=10), ZoneInfo(self.company_a.timezone)).strftime("%Y-%m-%dT%H:%M")
+        loc_end = timezone.localtime(end + timedelta(minutes=10), ZoneInfo(self.company_a.timezone)).strftime("%Y-%m-%dT%H:%M")
+        response = self.client.post(self.url("correct_shift", shift_id=shift.pk), {
+            "started_at": loc_start, "ended_at": loc_end, "note": "Manager verified work time"
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(BreakPeriod.objects.filter(shift=shift).count(), 1)
+        shift.refresh_from_db()
+        self.assertTrue(shift.corrected)
+
+    def test_deactivated_team_member_cannot_clock(self):
+        m = Membership.objects.get(company=self.company_a, user=self.staff_a)
+        m.active = False
+        m.save()
+        from django.core.exceptions import PermissionDenied
+        with self.assertRaises(PermissionDenied):
+            clock_action(self.company_a, self.staff_a, "in")
