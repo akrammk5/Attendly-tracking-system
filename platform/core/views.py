@@ -140,9 +140,17 @@ def accept_invite(request, token):
             else:
                 user = get_user_model().objects.filter(username__iexact=item.email).first()
                 if user:
-                    messages.error(request, "Sign into your existing account to accept your invitation.")
-                    return redirect("login")
-                user = get_user_model().objects.create_user(username=item.email.lower(), email=item.email.lower(), password=form.cleaned_data["password"])
+                    # Secure one-time bootstrap: permit a pre-provisioned inactive account
+                    # with an unusable password to set its first credential via invitation.
+                    # Never reset an established user's password through an invitation.
+                    if user.is_active or user.has_usable_password() or user.email.lower() != item.email.lower():
+                        messages.error(request, "Sign into your existing account to accept your invitation.")
+                        return redirect("login")
+                    user.set_password(form.cleaned_data["password"])
+                    user.is_active = True
+                    user.save(update_fields=["password", "is_active"])
+                else:
+                    user = get_user_model().objects.create_user(username=item.email.lower(), email=item.email.lower(), password=form.cleaned_data["password"])
             membership, created = Membership.objects.get_or_create(company=company, user=user, defaults={"role": item.role})
             if not created:
                 membership.active = True
