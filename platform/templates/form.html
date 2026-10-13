@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block title %}{{ title }}{% endblock %}{% block breadcrumb %}{{ title }}{% endblock %}
+{% block content %}<div class="page-heading"><div><div class="eyebrow">WORKSPACE CONFIGURATION</div><h1>{{ title }}</h1><p>{{ subtitle }}</p></div></div>
+<div class="panel narrow-panel"><form method="post" class="stack-form">{% csrf_token %}{{ form.non_field_errors }}
+{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{{ field.errors }}</div>{% endfor %}
+<button type="submit" class="btn btn-primary">Save and continue ↗</button></form></div>{% endblock %}
