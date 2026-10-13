@@ -1,0 +1,26 @@
+name: Attendly v2 quality gates
+on:
+  push:
+    paths:
+      - 'v2/**'
+      - 'tests/**'
+      - '.github/workflows/attendly-v2.yml'
+  pull_request:
+    paths:
+      - 'v2/**'
+      - 'tests/**'
+      - '.github/workflows/attendly-v2.yml'
+permissions:
+  contents: read
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run dependency-free tests
+        run: node --test tests/*.test.cjs
