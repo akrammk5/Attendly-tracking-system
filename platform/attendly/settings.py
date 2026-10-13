@@ -48,7 +48,7 @@ if db_url:
     DATABASES = {"default": {"ENGINE": "django.db.backends.postgresql",
         "NAME": unquote(u.path.lstrip("/")), "USER": unquote(u.username or ""),
         "PASSWORD": unquote(u.password or ""), "HOST": u.hostname, "PORT": u.port or 5432,
-        "OPTIONS": {"sslmode": os.getenv("POSTGRES_SSLMODE", "prefer")}}}
+        "OPTIONS": {"sslmode": os.getenv("POSTGRES_SSLMODE", "prefer" if DEBUG else "require")}, "CONN_MAX_AGE": 0}}
 else:
     if not DEBUG and os.getenv("ATTENDLY_TEST_SQLITE") != "1":
         raise ImproperlyConfigured("Production requires DATABASE_URL (PostgreSQL).")
