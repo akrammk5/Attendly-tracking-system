@@ -106,6 +106,8 @@ def verify_email(request, token):
         user = get_object_or_404(get_user_model(), pk=value["uid"])
     except (signing.BadSignature, signing.SignatureExpired, KeyError, ValueError, TypeError):
         return render(request, "auth/invite_expired.html", status=410)
+    if user.is_active:
+        return redirect('login')
     if not user.is_active:
         user.is_active = True
         user.save(update_fields=["is_active"])
