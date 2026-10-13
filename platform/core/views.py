@@ -254,7 +254,7 @@ def correct_shift(request, slug, shift_id):
             zone = ZoneInfo(company.timezone)
             start = timezone.make_aware(start_naive, zone)
             end = timezone.make_aware(end_naive, zone)
-            if end <= start or end - start > timedelta(hours=36):
+            if not request.POST.get("note", "").strip() or end <= start or end - start > timedelta(hours=36):
                 raise ValueError
             conflicting = Shift.objects.filter(company=company, user=item.user, started_at__lt=end).filter(
                 Q(ended_at__gt=start) | Q(ended_at__isnull=True)
@@ -316,7 +316,7 @@ def review_leave(request, slug, request_id):
 def filtered_shifts(request, company):
     start_text = request.GET.get("start", "")
     end_text = request.GET.get("end", "")
-    today = timezone.localdate()
+    today = timezone.localtime(timezone.now(), ZoneInfo(company.timezone)).date()
     try:
         start = datetime.strptime(start_text, "%Y-%m-%d").date() if start_text else today - timedelta(days=30)
         end = datetime.strptime(end_text, "%Y-%m-%d").date() if end_text else today
