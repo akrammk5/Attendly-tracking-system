@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Location",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ("name", models.CharField(max_length=120)),
                 ("active", models.BooleanField(default=True)),
                 ("company", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="locations", to="core.company")),
@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Membership",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ("role", models.CharField(choices=[("owner", "Owner"), ("admin", "Administrator"), ("manager", "Manager"), ("employee", "Employee")], default="employee", max_length=12)),
                 ("active", models.BooleanField(default=True)),
                 ("joined_at", models.DateTimeField(auto_now_add=True)),
@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Shift",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ("started_at", models.DateTimeField()),
                 ("ended_at", models.DateTimeField(blank=True, null=True)),
                 ("note", models.CharField(blank=True, max_length=250)),
@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="BreakPeriod",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ("started_at", models.DateTimeField()),
                 ("ended_at", models.DateTimeField(blank=True, null=True)),
                 ("shift", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="breaks", to="core.shift")),
@@ -71,7 +71,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="LeaveRequest",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ("start", models.DateField()),
                 ("end", models.DateField()),
                 ("reason", models.CharField(blank=True, max_length=200)),
@@ -85,7 +85,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Invitation",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ("email", models.EmailField(max_length=254)),
                 ("role", models.CharField(choices=[("owner", "Owner"), ("admin", "Administrator"), ("manager", "Manager"), ("employee", "Employee")], default="employee", max_length=12)),
                 ("token_hash", models.CharField(max_length=64, unique=True)),
@@ -99,7 +99,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="AuditEvent",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ("action", models.CharField(max_length=70)),
                 ("details", models.CharField(blank=True, max_length=250)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -111,7 +111,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Payment",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False)),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ("stripe_session_id", models.CharField(max_length=200, unique=True)),
                 ("stripe_event_id", models.CharField(blank=True, default="", max_length=200)),
                 ("paid_at", models.DateTimeField(blank=True, null=True)),
