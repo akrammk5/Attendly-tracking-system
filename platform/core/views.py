@@ -53,6 +53,10 @@ def page(request, template, company, member, **kwargs):
     return render(request, template, {"company": company, "member": member, "workspaces": workspaces, **kwargs})
 
 
+def landing(request):
+    return render(request, "landing.html")
+
+
 @login_required
 def home(request):
     first = Membership.objects.filter(user=request.user, active=True).select_related("company").first()
