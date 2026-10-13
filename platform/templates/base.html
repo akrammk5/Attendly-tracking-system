@@ -20,6 +20,7 @@
     <div class="workspace-caption">WORKSPACE</div>
     <div class="workspace"><span class="workspace-avatar">{{ company.name|first|upper }}</span>
       <span class="workspace-details"><strong>{{ company.name }}</strong><small>{{ member.get_role_display }}</small></span></div>
+    {% if workspaces|length > 1 %}<div class="workspace-links"><div class="workspace-caption">SWITCH COMPANY</div>{% for ws in workspaces %}{% if ws.company_id != company.id %}<a href="{% url 'dashboard' ws.company.slug %}">{{ ws.company.name }} →</a>{% endif %}{% endfor %}</div>{% endif %}
     <nav class="nav-items" aria-label="Main menu">
       <span class="nav-title">OVERVIEW</span>
       {% if member.role != "employee" %}
