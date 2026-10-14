@@ -1,9 +1,19 @@
 {% extends 'base.html' %}{% block title %}Welcome back{% endblock %}{% block content %}
-<div class="public-card"><a href="{% url 'login' %}" class="public-logo">attendly<span>.</span></a><div class="eyebrow">WELCOME BACK</div><h1>Sign in to your workspace</h1><p>One place for your team's time, people and progress.</p>
-<form method="post" class="stack-form">{% csrf_token %}
-{% if form.non_field_errors %}<div class="notice warning">{{ form.non_field_errors }}</div>{% endif %}
-<div class="field"><label for="id_username">Work email</label><input id="id_username" name="username" type="email" autocomplete="username" required autofocus></div>
-<div class="field"><label for="id_password">Password</label><input id="id_password" name="password" type="password" autocomplete="current-password" required></div>
-{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-<button type="submit" class="btn btn-primary">Sign in securely →</button></form>
-<p class="auth-alt"><a href="{% url 'password_reset' %}">Forgot password?</a></p><p class="auth-alt">New to Attendly? <a href="{% url 'signup' %}">Create a workspace</a></p></div>{% endblock %}
+<div class="auth-layout">
+  <section class="auth-story" aria-label="A better workday">
+    <a class="auth-story-brand" href="{% url 'landing' %}"><span class="auth-story-mark">◷</span> attendly<span>.</span></a>
+    <div class="auth-story-center"><div class="auth-story-orbit"><div class="auth-orbit-ring auth-ring-one"></div><div class="auth-orbit-ring auth-ring-two"></div><div class="auth-orbit-core"><svg class="ico"><use href="#i-clock"/></svg></div><span class="auth-orbit-float float-one"><svg class="ico"><use href="#i-check"/></svg></span><span class="auth-orbit-float float-two"><svg class="ico"><use href="#i-users"/></svg></span></div>
+    <span class="auth-story-eyebrow">A WORKDAY IN HARMONY</span><h2>More time for what matters.</h2><p>One beautiful workspace for every person, every shift, every moment of progress.</p></div>
+    <span class="auth-story-foot"><svg class="ico"><use href="#i-shield"/></svg> Thoughtful by design. Private by default.</span>
+  </section>
+  <section class="auth-login-pane"><div class="public-card auth-login-card"><a href="{% url 'landing' %}" class="public-logo auth-mobile-logo">attendly<span>.</span></a><div class="eyebrow">WELCOME BACK</div><h1>Your workspace awaits.</h1><p>Sign in and pick up right where you left off.</p>
+  <form method="post" class="stack-form">{% csrf_token %}{% if form.non_field_errors %}<div class="notice warning">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="field"><label for="id_username">Email address</label><input id="id_username" name="username" type="email" autocomplete="username" placeholder="you@company.com" required autofocus value="{{ form.username.value|default_if_none:'' }}"></div>
+    <div class="field"><div class="auth-label-row"><label for="id_password">Password</label><a href="{% url 'password_reset' %}">Forgot password?</a></div><input id="id_password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required></div>
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button type="submit" class="btn btn-primary">Sign in to Attendly <svg class="ico"><use href="#i-arrow"/></svg></button>
+  </form>
+  <div class="auth-bottom-note"><svg class="ico"><use href="#i-lock"/></svg> Secure sign-in. Your workspace stays yours.</div>
+  <p class="auth-alt">New to Attendly? <a href="{% url 'signup' %}">Create a workspace →</a></p></div></section>
+</div>
+{% endblock %}
