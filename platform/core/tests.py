@@ -367,3 +367,30 @@ class AttendlyPlatformTests(TestCase):
         self.assertEqual(again.status_code, 410)
         admin.refresh_from_db()
         self.assertFalse(admin.check_password("another-strong-password-change-attempt"))
+
+    def test_atelier_dashboard_and_employee_clock_are_role_aware(self):
+        from django.contrib.staticfiles import finders
+        self.assertIsNotNone(finders.find("css/atelier.css"))
+        self.client.force_login(self.owner_a)
+        dashboard = self.client.get(self.url("dashboard"))
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertContains(dashboard, "Everything in its place.")
+        self.assertContains(dashboard, "Team directory", status_code=200, count=0)
+        self.assertContains(dashboard, "css/atelier.css")
+        self.assertContains(dashboard, "href=\"#i-users\"")
+        self.client.force_login(self.staff_a)
+        clock = self.client.get(self.url("clock"))
+        self.assertEqual(clock.status_code, 200)
+        self.assertContains(clock, "Make today count.")
+        self.assertContains(clock, 'name="action" value="in"')
+        self.assertContains(clock, 'class="sidebar"')
+        self.assertNotContains(clock, '>People</span></a>')
+        self.assertEqual(self.client.get(self.url("dashboard")).status_code, 302)
+
+    def test_atelier_login_is_accessible_without_authentication(self):
+        self.client.logout()
+        res = self.client.get(reverse("login"))
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, "Your workspace awaits.")
+        self.assertContains(res, 'autocomplete="current-password"')
+        self.assertContains(res, "Forgot password?")
