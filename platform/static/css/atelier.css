@@ -281,3 +281,82 @@ select:focus,input:focus,textarea:focus{outline:none;border-color:#8176ec;box-sh
 @media (max-width:700px){.page-heading{flex-direction:column;align-items:flex-start;gap:15px}.page-heading .btn{align-self:flex-start}.welcome-band{padding:25px;flex-direction:column;align-items:flex-start}.welcome-band h2{font-size:23px}.welcome-band-action{width:100%;justify-content:center}.clock-grid{grid-template-columns:minmax(0,1fr)}.clock-card{padding:27px}.clock-hero .digital-clock{font-size:clamp(42px,12vw,67px)}.topbar-quick-clock{padding:8px}.topbar-quick-clock span{display:none}.topbar-user{height:31px;width:31px}.metric{min-height:155px;padding:20px}.metric-value{font-size:35px}.metric-small{font-size:25px}.app-footer span:last-child{display:none}}
 @media (max-width:480px){.page{padding:24px 16px 48px}.topbar{padding:0 16px}.topbar-end{gap:10px}.topbar-user{display:none}.metrics-grid{gap:10px}.metric{min-height:144px;padding:16px}.metric-title{font-size:11px}.metric-icon{width:30px;height:30px}.metric-icon .ico{width:16px;height:16px}.metric-value{font-size:31px;margin-top:16px}.metric-small{font-size:20px}.metric-foot{font-size:10px}.panel{padding:19px}.clock-card{padding:23px}.welcome-band{padding:21px}.page-heading h1{font-size:32px}.page-heading .btn{width:100%}.clock-hero .digital-clock{letter-spacing:-.08em}.clock-how-it-works{padding:18px}.topbar-eyebrow{font-size:11px}.crumb-root{display:none}.crumb-separator{display:none}.landing-intro{padding:48px 20px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Refined sign-in: no photography, tracking pixels, external font or image CDNs. */
+.public-page .page:has(.auth-layout){width:100%;max-width:none;display:block;padding:0}
+.auth-layout{min-height:calc(100dvh - 141px);display:grid;grid-template-columns:minmax(0,.98fr) minmax(460px,1.02fr);background:#fff}
+.auth-story{background:radial-gradient(ellipse at 35% 25%,#4d487e93,transparent 48%),linear-gradient(155deg,#232641,#191c36 70%,#302754);color:#fff;position:relative;overflow:hidden;padding:42px clamp(35px,4vw,75px);min-height:650px;display:flex;flex-direction:column;justify-content:space-between}
+.auth-story:before{content:"";position:absolute;right:-175px;bottom:-190px;border:1px solid #fff2;border-radius:50%;width:430px;height:430px;box-shadow:0 0 0 45px #ffffff07,0 0 0 125px #ffffff06}
+.auth-story-brand{position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;color:#fff;font-size:23px;font-weight:795;letter-spacing:-.075em}
+.auth-story-brand span:last-child{color:#aba3ff}
+.auth-story-mark{height:33px;width:33px;display:grid;place-items:center;color:#fff;background:linear-gradient(145deg,#897cff,#5550d2);border-radius:11px;font-size:25px}
+.auth-story-center{z-index:1;position:relative;margin-top:-30px}
+.auth-story-eyebrow{font-size:10px;font-weight:790;letter-spacing:.17em;color:#bfb8ff}
+.auth-story-center h2{color:#fff;font-size:clamp(37px,4vw,59px);letter-spacing:-.064em;line-height:1.09;max-width:460px;margin:14px 0 17px}
+.auth-story-center>p{color:#b7b6d1;font-size:15px;max-width:420px;line-height:1.8}
+.auth-story-foot{display:inline-flex;align-items:center;gap:8px;color:#a9aacd;font-size:11px}
+.auth-story-foot .ico{width:16px;height:16px}
+.auth-story-orbit{height:240px;width:240px;margin:0 0 37px 50px;position:relative;display:grid;place-items:center}
+.auth-orbit-ring{border:1px solid #b5aefa4f;border-radius:50%;position:absolute;inset:11px;transform:rotate(-20deg)}
+.auth-ring-two{inset:44px;border-color:#a8a0fa57}
+.auth-orbit-core{width:94px;height:94px;border-radius:29px;display:grid;place-items:center;background:linear-gradient(145deg,#8b85fc,#5e57d3);box-shadow:0 18px 55px #0b0c2f94,0 0 0 18px #ffffff0a;color:#fff}
+.auth-orbit-core .ico{height:42px;width:42px;stroke-width:1.5}
+.auth-orbit-float{position:absolute;display:grid;place-items:center;border-radius:14px;height:49px;width:49px;backdrop-filter:blur(12px);background:#f7f7ffeb;color:#655bde;box-shadow:0 8px 23px #0002;transform:rotate(9deg)}
+.auth-orbit-float .ico{width:24px;height:24px}
+.float-one{top:14px;right:12px}.float-two{bottom:21px;left:4px;transform:rotate(-10deg)}
+.auth-login-pane{background:radial-gradient(ellipse at 100% 0%,#f5f2ff,transparent 55%),#fff;display:flex;align-items:center;justify-content:center;padding:50px clamp(25px,6vw,95px)}
+.auth-login-card{padding:0!important;border:0!important;box-shadow:none!important;max-width:475px;width:100%;border-radius:0!important}
+.auth-login-card:before{display:none!important}
+.auth-login-card .auth-mobile-logo{display:none}
+.auth-login-card .eyebrow{margin-bottom:13px}
+.auth-login-card h1{font-size:clamp(32px,3vw,43px);line-height:1.17;margin:0 0 10px;color:#2a2c48}
+.auth-login-card>p{font-size:14px;color:#8991a6}
+.auth-login-card .stack-form{margin-top:31px;gap:21px}
+.auth-login-card input{height:53px;padding:14px 15px;font-size:13px;border-radius:12px}
+.auth-login-card .stack-form .btn{height:54px;margin-top:4px;justify-content:space-between;padding:0 21px;font-size:13px}
+.auth-login-card .auth-bottom-note{display:flex;align-items:center;justify-content:center;gap:8px;color:#9ca5b5;font-size:11px;margin-top:25px}
+.auth-bottom-note .ico{width:14px;height:14px}
+.auth-login-card .auth-alt{border-top:1px solid #edecf5;padding-top:23px;margin-top:26px}
+.auth-label-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.auth-label-row a{color:#665be7;font-size:11px;font-weight:740}
+.auth-label-row a:hover{text-decoration:underline}
+/* More tactile details across settings, reports, leave, invitations and billing. */
+.stack-form .field,.stack-form>div{gap:7px}
+.filter-form{gap:13px}
+.filter-form .btn{min-height:45px}
+.inline-form .btn{font-size:11px}
+.inline-form select{max-width:122px}
+.bill-feature{border-color:#eeecf5;color:#505970}
+.bill-feature span{background:#eaf8f2;color:#109a78}
+.notice,.flash{line-height:1.65}
+.notice a{font-weight:780}
+.billing-grid{gap:20px}
+.public-page .public-card .btn-primary{width:100%}
+input::placeholder,textarea::placeholder{color:#aab2c3}
+::selection{background:#d8d3ff;color:#22203a}
+/* Premium marketing surface with calm gradient depth */
+.landing-intro{position:relative}
+.landing-intro:before{position:absolute;content:"";width:480px;height:480px;background:radial-gradient(circle,#ece7ff,transparent 69%);top:-140px;left:-250px;pointer-events:none}
+.landing-copy{position:relative;z-index:1}
+.landing-copy h1 em{background:linear-gradient(100deg,#746aff,#4e45c9);-webkit-background-clip:text;background-clip:text;color:transparent}
+.landing-trust{font-size:11px;color:#7d8599;gap:17px}
+.landing-preview{transform:rotate(-1.2deg);background:#fff;box-shadow:0 30px 90px #403f7a22;transition:transform .3s}
+.landing-preview:hover{transform:rotate(0deg) translateY(-3px)}
+.preview-bar{background:#252746}
+.preview-body{background:#fbfbfe}
+.preview-table-title{color:#303655}
+.preview-metrics>div{background:white;border-color:#eeecf8}
+.preview-pill{background:#dcf6ec;color:#0b926e}
+.preview-pill.neutral{background:#f0f1f7;color:#747c90}
+.landing-features{background:#fff}
+.landing-features .section-center h2{color:#252841}
+.feature-card{background:#fdfdff;border:1px solid #e9e8f4;box-shadow:0 8px 30px #24234808;transition:transform .2s,box-shadow .2s}
+.feature-card:hover{transform:translateY(-5px);box-shadow:0 18px 40px #24234812}
+.feature-card h3{font-size:17px;color:#2d3048}
+.feature-card p{color:#878fa4}
+.landing-action{border-radius:25px;overflow:hidden;background:radial-gradient(circle at 80% 10%,#554e9e 0%,transparent 40%),linear-gradient(120deg,#282b4b,#252544 72%,#423d77)}
+.landing-action .eyebrow{color:#b8b0ff}
+.landing-action h2{color:white}
+.landing-action p{color:#ccc9df}
+@media(max-width:950px){.auth-layout{grid-template-columns:1fr;min-height:calc(100dvh - 143px)}.auth-story{display:none}.auth-login-pane{padding:64px 24px;min-height:calc(100dvh - 143px)}.auth-login-card .auth-mobile-logo{display:block;font-size:24px;margin-bottom:50px}.auth-login-card .auth-mobile-logo span{color:#665be4}.auth-login-card{max-width:465px}}
+@media(max-width:560px){.auth-login-pane{padding:35px 22px;align-items:flex-start}.auth-login-card .auth-mobile-logo{margin-bottom:55px}.auth-login-card h1{font-size:34px}.auth-login-card .stack-form{margin-top:28px}}
